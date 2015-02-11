@@ -10,11 +10,16 @@
 #include <string>
 #include <GL/gl.h>
 #include <GL/glu.h>
+#include <GL/glut.h>
 #include <vector>
-#include <ctime>
+#include <time.h>
 
 
 #define MAXPARTICLE 1000
+
+static bool buttonDown = false;
+static bool triggerPart = false, bulletLive = false;
+float xMouse,yMouse;
 
 void SDLErrorExit(const std::string &_err)
 {
@@ -208,34 +213,111 @@ void draw()
     glPopMatrix();
 }
 
+void buttonParticle()
+{
+  int i;
+  float partSpeed = 1;
+  static bool mousePosCap = false;
+  float partPosX[90], partPosY[90];
+  float sXM = 9.3f;
+  float sYM = 7.49f;
+  glPushMatrix();
+    glPointSize(5);
+    glBegin(GL_POINTS);
+      for (i=0; i<1;i++)
+      {
+        if (triggerPart == true)
+        {
+          char r = (char)((double)rand() / ((double)RAND_MAX+1)*255);
+          char g = (char)((double)rand() / ((double)RAND_MAX+1)*255);
+          char b = (char)((double)rand() / ((double)RAND_MAX+1)*255);
+          glColor3f(r,g,b);
+          mousePosCap = true;
+
+          if (mousePosCap == true)
+          {
+            partPosX[i] = xMouse;
+            partPosY[i] = yMouse;
+            //std::cout<<"mouse capture"<<xMouse<<yMouse<<i<<std::endl;
+          }
+          }
+          mousePosCap = false;
+
+        if (bulletLive == true)
+        {
+          glVertex2f(-sXM*partPosX[i],sYM*(partPosY[i]));
+          std::cout<<partPosX[i]<<std::endl;
+        }
+
+      }
+    glEnd();
+  glPopMatrix();
+}
+
+
 void particle()
 {
-    float xPos;
-    float yPos; //= 7.0f;
-    float r;
-    float g;
-    float b;
 
+    SDL_Rect _rect;
+    float r,g,b;
+    int x,y;
+    static int particleAlive = 0;
+    static bool particleLimit = false;
+    SDL_GetDisplayBounds(0, &_rect);
+    SDL_GetMouseState(&x, &y);
+    xMouse = -(((float)x / (float)_rect.w)*2 - 1);
+    yMouse = -(((float)y / (float)_rect.h)*2 - 1);
 
-    glPushMatrix();
-        glPointSize(1);
+    if (buttonDown == true)
+    {
+        r = 1.0f;
+        g = 0.0f;
+        b = 0.0f;
+        triggerPart = true;
+    }
+    else
+    {
+        r = 0.0f;
+        g = 1.0f;
+        b = 0.0f;
+    }
 
-        glBegin(GL_POINTS);
-            glColor3f(0.0f,1.0f,0.0f);
+    if (particleAlive <= MAXPARTICLE && particleLimit == false)
+    {
+        float sXM = 9.3f;
+        float sYM = 7.49f;
+        glPushMatrix();
+            glPointSize(10);
 
-            for (int i=0; i<MAXPARTICLE*5000; i++)
-            {
-                xPos = (((float)rand() / (float)RAND_MAX)*2-1)*15;
-                yPos = (((float)rand() / (float)RAND_MAX)*2-1)*155;
-                glVertex2f(xPos,yPos);
-                r = (rand()%255)/255;
-                g = 10;
-                b = (rand()%255)/255;
+            glBegin(GL_POINTS);
                 glColor3f(r,g,b);
-            }
+                glVertex2f(-sXM*xMouse, sYM*yMouse);
+                //glVertex2f(x*0.005,y*0.005);
+/*
+                for (int i=0; i<MAXPARTICLE*500; i++)
+                {
+                    xPos = (((float)rand() / (float)RAND_MAX)*2-1)*15;
+                    yPos = (((float)rand() / (float)RAND_MAX)*2-1)*155;
+                    glVertex2f(xPos,yPos);
+                    char r = (char)((double)rand() / ((double)RAND_MAX+1)*255);
+                    char g = (char)((double)rand() / ((double)RAND_MAX+1)*255);
+                    char b = (char)((double)rand() / ((double)RAND_MAX+1)*255);
+                    glColor3f(r,g,b);
+                    particleAlive++;
 
-        glEnd();
-    glPopMatrix();
+
+                }*/
+
+                glEnd();
+        glPopMatrix();
+
+    }
+    if (particleAlive == MAXPARTICLE*2)
+    {
+        particleLimit = true;
+    }
+
+
 }
 
 
@@ -255,10 +337,12 @@ int main()
 {
  //    std::cout<<"Hello World"<<std::endl;
 
+
     if(SDL_Init(SDL_INIT_VIDEO) <0)
     {
         SDLErrorExit("Unable to init SDL");
     }
+
 
     //grabs the size if the display
     SDL_Rect rect;
@@ -269,6 +353,9 @@ int main()
     {
         SDLErrorExit("Unable to create Window");
     }
+
+    //hides the cursor
+    SDL_ShowCursor(SDL_DISABLE);
 
 
 
@@ -297,6 +384,25 @@ int main()
 
         while(SDL_PollEvent(&e))
             {
+
+              if(e.type == SDL_MOUSEBUTTONDOWN)
+              {
+                if(e.button.button == SDL_BUTTON_LEFT)
+                {
+                    buttonDown = true;
+                    triggerPart = true;
+                    bulletLive = true;
+                }
+              }
+              if(e.type == SDL_MOUSEBUTTONUP)
+              {
+                if(e.button.button == SDL_BUTTON_LEFT)
+                {
+                  buttonDown = false;
+                  triggerPart = false;
+                  bulletLive = false;
+                }
+              }
               switch(e.type)
               {
                 case SDL_WINDOWEVENT :
@@ -325,6 +431,7 @@ int main()
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
        // draw();
         particle();
+        buttonParticle();
 
         SDL_GL_SwapWindow(win);
     }
