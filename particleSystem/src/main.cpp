@@ -13,12 +13,13 @@
 #include <GL/glut.h>
 #include <vector>
 #include <time.h>
+#include "particle.h"
 
 
 #define MAXPARTICLE 1000
 
 static bool buttonDown = false;
-static bool triggerPart = false, bulletLive = false;
+static bool triggerPart = false, bulletLive = false,flag = false;
 float xMouse,yMouse;
 
 void SDLErrorExit(const std::string &_err)
@@ -213,19 +214,28 @@ void draw()
     glPopMatrix();
 }
 
+void particle::update()
+{
+
+}
+
 void buttonParticle()
 {
   int i;
-  float partSpeed = 1;
+  SDL_Rect _rect;
+  SDL_GetDisplayBounds(0, &_rect);
+  particle p;
+  float fallSpeed = 0.05,partJump = 0.005, partX, partY,dirX,dirY;
   static bool mousePosCap = false;
   float partPosX[90], partPosY[90];
   float sXM = 9.3f;
   float sYM = 7.49f;
+  //fallSpeed = (dirY += 0.05);
   glPushMatrix();
     glPointSize(5);
     glBegin(GL_POINTS);
-      for (i=0; i<1;i++)
-      {
+//      for (i=0; i<1;i++)
+//      {
         if (triggerPart == true)
         {
           char r = (char)((double)rand() / ((double)RAND_MAX+1)*255);
@@ -234,28 +244,43 @@ void buttonParticle()
           glColor3f(r,g,b);
           mousePosCap = true;
 
-          if (mousePosCap == true)
+          if (mousePosCap == true and flag == true)
           {
-            partPosX[i] = xMouse;
-            partPosY[i] = yMouse;
-            //std::cout<<"mouse capture"<<xMouse<<yMouse<<i<<std::endl;
+//            partPosX[i] = xMouse;
+//            partPosY[i] = yMouse;
+            partX = xMouse;
+            partY = yMouse;
+            dirX = (((double) rand() / (RAND_MAX))/50)-0.01;
+            dirY = (((double) rand() / (RAND_MAX))/50)-0.01;
+            flag = false;
+            std::cout << RAND_MAX << "\n";
+
           }
           }
           mousePosCap = false;
+          partY -= fallSpeed;//(dirY && dirX);
+          //fallSpeed += partJump;
 
-        if (bulletLive == true)
+//          std::cout<<"mouse capture"<<partX<<partY<<std::endl;
+
+        if (bulletLive == true && partY <= 1)
         {
-          glVertex2f(-sXM*partPosX[i],sYM*(partPosY[i]));
-          std::cout<<partPosX[i]<<std::endl;
+          glVertex2f(-sXM*partX,sYM*(partY));
+          std::cout<<dirX<<" "<<dirY<<std::endl;
+        }
+        if (partY < -1 || partY > 1)
+        {
+          partY = 0;
+          bulletLive = false;
         }
 
-      }
+//      }
     glEnd();
   glPopMatrix();
 }
 
 
-void particle()
+void particle::particleDraw()
 {
 
     SDL_Rect _rect;
@@ -337,7 +362,9 @@ int main()
 {
  //    std::cout<<"Hello World"<<std::endl;
 
-
+    particle p;
+    srand(static_cast <unsigned> (time(0)));
+    int runThrough = 0;
     if(SDL_Init(SDL_INIT_VIDEO) <0)
     {
         SDLErrorExit("Unable to init SDL");
@@ -392,6 +419,11 @@ int main()
                     buttonDown = true;
                     triggerPart = true;
                     bulletLive = true;
+                    runThrough +=1;
+                    if (runThrough >=1)
+                    {
+                      flag = true;
+                    }
                 }
               }
               if(e.type == SDL_MOUSEBUTTONUP)
@@ -400,7 +432,7 @@ int main()
                 {
                   buttonDown = false;
                   triggerPart = false;
-                  bulletLive = false;
+                  runThrough = 0;
                 }
               }
               switch(e.type)
@@ -430,7 +462,7 @@ int main()
 
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
        // draw();
-        particle();
+        p.particleDraw();
         buttonParticle();
 
         SDL_GL_SwapWindow(win);
