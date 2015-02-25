@@ -1,0 +1,9 @@
+# this is a comment
+#eye [x,y,z] look [x,y,z] fov nv fz
+
+
+Camera 4 4 2 0 0 0 0 1 0 45.0 0.5 200
+
+# Cube w,h,d colour r,g,b tx,ty,tz scale rotate and axis
+Cube 1.0 2.0 1.0 1.0 0.0 0.0 1.0 0.0 0.0 1.0 1.0 1.0 90 0 1 0
+Cube 1.0 2.0 1.0 1.0 0.0 0.0 1.0 0.0 0.0 1.0 1.0 1.0 90 0 1 0
